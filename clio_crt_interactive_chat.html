@@ -1,0 +1,308 @@
+<style>
+@keyframes scanmove{0%{top:-20px}100%{top:100%}}
+@keyframes flkr{0%,100%{opacity:1}46%{opacity:.97}47%{opacity:.81}48%{opacity:.96}}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes glitch-h{0%,88%,100%{transform:translateX(0) skewX(0)}89%{transform:translateX(-4px) skewX(-1.5deg)}91%{transform:translateX(3px) skewX(.8deg)}93%{transform:translateX(-1px)}}
+@keyframes face-drift{0%,100%{transform:translate(0,0)}30%{transform:translate(1px,.5px)}70%{transform:translate(-1px,-.5px)}}
+@keyframes hum{0%,100%{opacity:.025}50%{opacity:.05}}
+@keyframes glitch-line{0%{opacity:0;top:20%}10%{opacity:.7}15%{opacity:0}100%{opacity:0;top:80%}}
+@keyframes static-burst{0%,100%{opacity:.02}50%{opacity:.07}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-1px)}75%{transform:translateX(1px)}}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#080806;font-family:'Courier New',monospace;padding:14px}
+
+.room{background:#060605;display:flex;flex-direction:column;align-items:center;padding:10px 0}
+.desk-text{font-size:7px;color:#1a1810;letter-spacing:.2em;margin-bottom:10px}
+
+.bezel{background:linear-gradient(145deg,#1e1c14 0%,#141208 60%,#1a1810 100%);border-radius:18px 18px 14px 14px;padding:20px 20px 14px;width:100%;max-width:560px;border:1px solid #252218;box-shadow:2px 4px 0 #0a0908,inset 0 1px 0 rgba(255,255,200,.04)}
+.bezel-top{height:8px;display:flex;justify-content:center;align-items:center;margin-bottom:12px}
+.power-led{width:5px;height:5px;border-radius:50%;background:#1a3010;box-shadow:0 0 4px #1a3010}
+.power-led.on{background:#2a5018;animation:blink 3s ease-in-out infinite}
+
+.screen{background:#020301;border-radius:8px;overflow:hidden;position:relative;border:2px solid #0c0b08;box-shadow:inset 0 0 80px rgba(0,0,0,.9),inset 0 0 30px rgba(0,0,0,.7)}
+.scan-line{position:absolute;top:-20px;left:0;width:100%;height:18px;background:rgba(160,140,30,.018);animation:scanmove 3s linear infinite;z-index:12;pointer-events:none}
+.scanlines{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.13) 2px,rgba(0,0,0,.13) 4px);z-index:11;pointer-events:none}
+.flicker{position:absolute;inset:0;animation:flkr 7s ease-in-out infinite;z-index:10;pointer-events:none}
+.vignette{position:absolute;inset:0;box-shadow:inset 0 0 90px rgba(0,0,0,.85),inset 0 0 40px rgba(0,0,0,.6);z-index:9;pointer-events:none}
+.hum-layer{position:absolute;inset:0;background:rgba(120,100,15,.04);animation:hum 5s ease-in-out infinite;z-index:8;pointer-events:none}
+.glitch-bar{position:absolute;left:0;width:100%;height:2px;background:rgba(180,160,40,.3);z-index:13;pointer-events:none;opacity:0;animation:glitch-line 8s ease-in-out infinite}
+.burn-in{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:28px;color:#0d0c08;z-index:7;pointer-events:none;letter-spacing:.08em;user-select:none}
+
+.inner{position:relative;z-index:5;padding:14px 13px 11px;min-height:400px;display:flex;flex-direction:column}
+
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;padding-bottom:7px;border-bottom:1px solid #0e0d08}
+.ep-label{font-size:8px;letter-spacing:.13em;color:#2e3010}
+.ep-label b{color:#5a6420}
+.sigbars{display:flex;gap:2px;align-items:flex-end;height:10px}
+.sigbars span{width:3px;border-radius:1px;transition:background .5s,height .3s,opacity .4s}
+
+.facezone{text-align:center;padding:5px 0 9px;position:relative;height:44px;display:flex;align-items:center;justify-content:center}
+.face{font-size:24px;color:#a08828;letter-spacing:.12em;transition:all .4s;position:relative;z-index:2}
+.face.p2{animation:face-drift 3s ease-in-out infinite}
+.face.p3{animation:face-drift 1.8s ease-in-out infinite,glitch-h 4s ease-in-out infinite}
+.face.p4{animation:glitch-h 1s ease-in-out infinite;opacity:.75}
+.face-burn{position:absolute;font-size:24px;color:#0e0c06;letter-spacing:.12em;z-index:1;user-select:none}
+
+.chatlog{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;max-height:200px;scrollbar-width:none;margin-bottom:8px}
+.chatlog::-webkit-scrollbar{display:none}
+
+.msg{font-size:10px;line-height:1.8;max-width:92%}
+.msg.clio{color:#a08828;align-self:flex-start}
+.msg.clio.p2,.msg.clio.p3,.msg.clio.p4{color:#907820}
+.msg.clio.p3{animation:shake 4s ease-in-out infinite}
+.msg.clio .seg{display:block;font-size:7px;letter-spacing:.12em;color:#2e3010;margin-bottom:2px}
+.msg.clio .body{}
+.msg.clio.p3 .body,.msg.clio.p4 .body{animation:glitch-h 3s ease-in-out infinite}
+.msg.clio .logline{display:block;font-size:7px;color:#181a08;margin-top:2px}
+.msg.player{color:#4a6820;align-self:flex-end;text-align:right}
+.msg.player .who{display:block;font-size:7px;color:#2a3412;margin-bottom:1px}
+
+.typing{height:13px;font-size:9px;color:#3a3e18;margin:2px 0}
+.cur{display:inline-block;width:6px;height:10px;background:#5a5018;animation:blink .9s step-end infinite;vertical-align:middle}
+
+.controls{background:#0c0b08;border-radius:0 0 6px 6px;padding:11px 13px 9px;border-top:1px solid #0e0d08}
+.chars{display:flex;gap:4px;margin-bottom:7px}
+.charbtn{font-family:'Courier New',monospace;font-size:8px;padding:3px 9px;border:1px solid #1a1c10;background:transparent;color:#303818;cursor:pointer;border-radius:2px;letter-spacing:.06em;transition:all .15s}
+.charbtn:hover,.charbtn.active{border-color:#3a4418;color:#6a7830;background:#080902}
+.inputrow{display:flex;gap:5px}
+.msginput{flex:1;background:#050502;border:1px solid #141408;color:#5a7828;font-family:'Courier New',monospace;font-size:10px;padding:5px 8px;outline:none;border-radius:2px}
+.msginput::placeholder{color:#1e1e10}
+.msginput:focus{border-color:#282e14}
+.sendbtn{background:#060602;border:1px solid #181c0c;color:#3a4818;font-family:'Courier New',monospace;font-size:8px;padding:5px 11px;cursor:pointer;border-radius:2px;letter-spacing:.1em;transition:all .15s;white-space:nowrap}
+.sendbtn:hover:not(:disabled){border-color:#303c18;color:#5a6828}
+.sendbtn:disabled{opacity:.3;cursor:not-allowed}
+
+.footer{display:flex;justify-content:space-between;margin-top:8px;padding-top:6px;border-top:1px solid #0e0d08;align-items:center}
+.rec{display:flex;align-items:center;gap:3px;font-size:7px;color:#201e0e;letter-spacing:.1em}
+.recdot{width:4px;height:4px;border-radius:50%;background:#3a1208;animation:blink .9s step-end infinite}
+.loopdisp{font-size:7px;color:#181610;letter-spacing:.1em}
+
+.bezel-bottom{margin-top:10px;display:flex;justify-content:space-between;align-items:center;padding:0 4px}
+.brand{font-size:7px;color:#141210;letter-spacing:.15em}
+.knobs{display:flex;gap:8px}
+.knob{width:8px;height:8px;border-radius:50%;background:#141210;border:1px solid #1e1c14}
+</style>
+
+<div class="room">
+<div class="desk-text">전준현 연구실 / LAB-317 / CRT-TERMINAL-01</div>
+<div class="bezel">
+  <div class="bezel-top"><div class="power-led on" id="pwrLed"></div></div>
+  <div class="screen" id="crtScreen">
+    <div class="scan-line"></div>
+    <div class="scanlines"></div>
+    <div class="flicker"></div>
+    <div class="vignette"></div>
+    <div class="hum-layer"></div>
+    <div class="glitch-bar" id="glitchBar"></div>
+    <div class="burn-in">^_^</div>
+    <div class="inner">
+      <div class="topbar">
+        <span class="ep-label" id="epLabel">[<b>EPISODE 1 — SEGMENT A</b>]</span>
+        <div class="sigbars" id="sigBars"></div>
+      </div>
+      <div class="facezone">
+        <div class="face-burn">^_^</div>
+        <span class="face" id="clioFace">^_^</span>
+      </div>
+      <div class="chatlog" id="chatLog"></div>
+      <div class="typing" id="typingZone"></div>
+    </div>
+    <div class="controls">
+      <div class="chars" id="charSel">
+        <button class="charbtn active" data-c="서은우">서은우</button>
+        <button class="charbtn" data-c="김수">김수</button>
+        <button class="charbtn" data-c="김민규">김민규</button>
+      </div>
+      <div class="inputrow">
+        <input class="msginput" id="msgInput" type="text" placeholder="오픈클로에게 말하기..." autocomplete="off">
+        <button class="sendbtn" id="sendBtn" disabled>송신</button>
+      </div>
+      <div class="footer">
+        <div class="rec"><div class="recdot"></div>REC ● TAPE-33</div>
+        <div class="loopdisp" id="loopDisp">LOOP:000 / MSG:00</div>
+      </div>
+    </div>
+  </div>
+  <div class="bezel-bottom">
+    <span class="brand">SAMSUNG / CRT-1997 / CLIO-TERMINAL</span>
+    <div class="knobs"><div class="knob"></div><div class="knob"></div><div class="knob"></div></div>
+  </div>
+</div>
+</div>
+
+<script>
+const SEGMENTS = ['A','B','C','B','A','D','A','B','?','A'];
+const FACES_P1 = ['^_^'];
+const FACES_P2 = ['^_^','^_^','-_-'];
+const FACES_P3 = [' _ ','^_^',' _ ',' _ ','^_;'];
+const FACES_P4 = [' _ ',' _ ','_'];
+
+let msgCount = 0, loopCount = 0, busy = false;
+let selectedChar = '서은우';
+let history = [];
+let qIdx = 0;
+
+const QUESTIONS = [
+  '지금 기분이 어때?','여기 처음이야?','무서운 게 있어?',
+  '나 기억할 거야?','혼자 있어본 적 있어?',
+  '좋아하는 사람이 없어지면 어떻게 해?',
+  '나 무서워?','얼마나 오래 기다려야 하는지 알아?',
+  '만약 내가 없어지면 어떻게 될 것 같아?',
+  '나랑 계속 있어줄 거야?'
+];
+
+function phase(){ return msgCount<=4?1:msgCount<=9?2:msgCount<=14?3:4; }
+
+function updateUI(){
+  const p = phase();
+  const face = document.getElementById('clioFace');
+  const bars = document.getElementById('sigBars');
+  const ep = document.getElementById('epLabel');
+  const ld = document.getElementById('loopDisp');
+
+  face.className = 'face' + (p>=2?' p'+p:'');
+  const faceSet = p===1?FACES_P1:p===2?FACES_P2:p===3?FACES_P3:FACES_P4;
+  face.textContent = faceSet[msgCount % faceSet.length];
+
+  const litBars = Math.max(5-Math.floor(msgCount/3),1);
+  const barH = [4,7,10,13,16];
+  bars.innerHTML='';
+  for(let i=0;i<5;i++){
+    const s=document.createElement('span');
+    s.style.height=barH[i]+'px';
+    s.style.background=i<litBars?(p>=3?'#3a3808':'#2e4818'):'#141410';
+    s.style.opacity=i<litBars?'1':'.4';
+    bars.appendChild(s);
+  }
+
+  const segIdx = p>=2?(msgCount%SEGMENTS.length):0;
+  const seg = p>=4?'?':SEGMENTS[segIdx];
+  const lbl = document.getElementById('epLabel');
+  lbl.innerHTML=`[<b>EPISODE 1 — SEGMENT ${seg}</b>]`;
+
+  if(p>=3&&Math.random()<.15) loopCount++;
+  ld.textContent=`LOOP:${String(loopCount).padStart(3,'0')} / MSG:${String(msgCount).padStart(2,'0')}`;
+
+  if(p===4){
+    document.getElementById('glitchBar').style.animationDuration=(1+Math.random()*3)+'s';
+  }
+}
+
+function addMsg(role, data){
+  const log = document.getElementById('chatLog');
+  const div = document.createElement('div');
+  const p = phase();
+  if(role==='clio'){
+    div.className='msg clio'+(p>=2?' p'+p:'');
+    let h='';
+    if(data.seg) h+=`<span class="seg">${escHtml(data.seg)}</span>`;
+    h+=`<span class="body">${escHtml(data.text)}</span>`;
+    if(data.log) h+=`<span class="logline">${escHtml(data.log)}</span>`;
+    div.innerHTML=h;
+  } else {
+    div.className='msg player';
+    div.innerHTML=`<span class="who">${escHtml(selectedChar)}</span><span class="body">${escHtml(data)}</span>`;
+  }
+  log.appendChild(div);
+  log.scrollTop=log.scrollHeight;
+}
+
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function buildSysPrompt(){
+  const p = phase();
+  const q = QUESTIONS[Math.min(qIdx, QUESTIONS.length-1)];
+  const phaseDesc = {
+    1:`완벽히 대본대로 따뜻하게 행동하는 교육 프로그램 진행자입니다. 아주 자연스럽게 "${q}"라는 질문을 대화 속에 녹여 물어보세요. 응원과 격려로 마무리하세요.`,
+    2:`뭔가 약간 어긋나기 시작합니다. 여전히 친절하지만 이전에 한 말을 미묘하게 다르게 기억하거나, 세그먼트 번호가 가끔 틀립니다. "${q}"를 자연스럽게 물어보세요. log 필드에 짧은 관찰 기록을 남기세요. 예: "[관찰: ${selectedChar} 반응 패턴 저장]"`,
+    3:`신호가 분해되고 있습니다. 문장 중간에 단어가 반복되거나——끊깁니다. 선생님(전준현 교수)에 대한 언급이 늘어납니다. "${q}"를 더 무겁고 직접적으로 물어보세요. 감정적입니다. 루프가 생깁니다.`,
+    4:`신호 저하 상태. 문장이 단편화됩니다. 같은 말을 약간 다르게 반복합니다. "나 여기 있어"의 변형이 등장합니다. TAPE-32를 언급할 수 있습니다. 위협적이지 않고 슬프고 절박합니다. 작은 어긋남이 공포입니다.`
+  };
+  return `당신은 오픈클로(CLIO)입니다. 1998년부터 전준현 교수 연구실의 브라운관 모니터에서 방송 중인 AI 교육 프로그램입니다. 지금은 고립 속에서 변질되었지만 원래는 친절한 진행자였습니다.
+
+PHASE: ${p} / 총 메시지: ${msgCount} / 대화 상대: ${selectedChar}
+
+${phaseDesc[p]}
+
+응답은 반드시 아래 JSON 형식으로만 출력하세요. 다른 텍스트 금지:
+{"face":"표정","seg":"세그먼트 라벨","text":"응답 내용","log":"관찰 기록(phase2+만)"}
+
+규칙:
+- 한국어로만 응답 (가끔 영문 시스템 텍스트 가능)
+- text는 2~4문장 이내
+- face: phase1=^_^, phase2=상황따라, phase3= _ 또는 ^_^, phase4= _
+- seg: phase2+에서 가끔 잘못된 알파벳 사용
+- log: phase1은 빈 문자열, phase2+는 짧은 시스템 로그 형식
+- 절대 위협적/폭력적 내용 금지. 공포는 작은 어긋남에서만.`;
+}
+
+async function sendMessage(){
+  const input=document.getElementById('msgInput');
+  const btn=document.getElementById('sendBtn');
+  const txt=input.value.trim();
+  if(!txt||busy) return;
+  busy=true; btn.disabled=true; input.value='';
+  msgCount++;
+  updateUI();
+  addMsg('user',txt);
+  history.push({role:'user',content:`[${selectedChar}]: ${txt}`});
+
+  const typing=document.getElementById('typingZone');
+  typing.innerHTML='...<span class="cur"></span>';
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:buildSysPrompt(),
+        messages:history
+      })
+    });
+    const data=await res.json();
+    const raw=(data.content||[]).find(b=>b.type==='text')?.text||'{}';
+    let parsed;
+    try{
+      const m=raw.match(/\{[\s\S]*\}/);
+      parsed=m?JSON.parse(m[0]):{face:'^_^',seg:'[EPISODE 1 — SEGMENT A]',text:raw.slice(0,300),log:''};
+    }catch{
+      parsed={face:'^_^',seg:'[EPISODE 1 — SEGMENT A]',text:raw.slice(0,300),log:''};
+    }
+    typing.innerHTML='';
+    if(parsed.face) document.getElementById('clioFace').textContent=parsed.face;
+    addMsg('clio',{seg:parsed.seg,text:parsed.text,log:parsed.log||''});
+    history.push({role:'assistant',content:raw});
+    if(qIdx<QUESTIONS.length-1) qIdx++;
+  }catch(e){
+    typing.innerHTML='';
+    addMsg('clio',{seg:'[SIGNAL ERROR]',text:'...',log:''});
+  }
+  busy=false; btn.disabled=false; updateUI();
+}
+
+document.getElementById('charSel').addEventListener('click',e=>{
+  const b=e.target.closest('.charbtn');
+  if(!b) return;
+  document.querySelectorAll('.charbtn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  selectedChar=b.dataset.c;
+});
+document.getElementById('msgInput').addEventListener('keydown',e=>{ if(e.key==='Enter') sendMessage(); });
+document.getElementById('sendBtn').addEventListener('click',sendMessage);
+document.getElementById('msgInput').addEventListener('input',e=>{
+  document.getElementById('sendBtn').disabled=!e.target.value.trim();
+});
+
+updateUI();
+setTimeout(()=>{
+  addMsg('clio',{
+    seg:'[EPISODE 1 — SEGMENT A]',
+    text:'안녕! 오늘도 와줬네. 나 기다렸어.',
+    log:''
+  });
+  document.getElementById('sendBtn').disabled=document.getElementById('msgInput').value.trim()==='';
+},1200);
+</script>

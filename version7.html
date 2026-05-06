@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLIO — EPISODE 1 / CRT TERMINAL</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap');
+
+:root {
+  --green-bright:  #B8D44A;
+  --green-mid:     #8FAF2A;
+  --green-dim:     #5A7C1A;
+  --green-dark:    #2E4A0C;
+  --green-faint:   #1A2E08;
+  --amber-bright:  #E8B84A;
+  --amber-mid:     #C49020;
+  --amber-dim:     #8A6010;
+  --bg:            #040503;
+  --scanline:      rgba(0,0,0,0.18);
+  --vignette:      rgba(0,0,0,0.82);
+  --bezel-outer:   #1C1A10;
+  --bezel-mid:     #141208;
+  --bezel-inner:   #0E0C06;
+  --border-glow:   #2A3C10;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; min-height: 100vh;
+  background: #0A0908;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  overflow-x: hidden;
+}
+
+/* ── ROOM / DESK CONTEXT ── */
+.room {
+  width: 100%; max-width: 1520px;
+  padding: 48px 40px 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: radial-gradient(ellipse at 50% 30%, #0F0D07 0%, #060504 70%);
+  position: relative;
+}
+.room::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent, transparent 120px,
+    rgba(255,255,200,0.006) 120px, rgba(255,255,200,0.006) 121px
+  );
+  pointer-events: none;
+}
+
+.desk-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.28em;
+  color: #2A2816;
+  margin-bottom: 24px;
+  text-transform: uppercase;
+}
+
+/* ── CRT BEZEL ── */
+.bezel {
+  width: 100%;
+  max-width: 1360px;
+  background: linear-gradient(150deg, #242014 0%, #181408 55%, #201C0E 100%);
+  border-radius: 32px 32px 24px 24px;
+  padding: 38px 38px 28px;
+  border: 2px solid #2A2616;
+  box-shadow:
+    0 8px 0 #0C0A04,
+    0 12px 32px rgba(0,0,0,0.9),
+    inset 0 2px 0 rgba(255,255,200,0.05),
+    inset 0 -2px 0 rgba(0,0,0,0.4);
+  position: relative;
+}
+.bezel-top {
+  height: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 26px;
+}
+.power-led {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: #1A3010;
+  box-shadow: 0 0 6px #1A3010;
+}
+.power-led.on {
+  background: #3AFF60;
+  box-shadow: 0 0 12px #3AFF60, 0 0 24px rgba(58,255,96,0.4);
+  animation: led-pulse 3s ease-in-out infinite;
+}
+@keyframes led-pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+/* ── SCREEN ── */
+.screen {
+  background: #020301;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  border: 3px solid #0C0B07;
+  box-shadow:
+    inset 0 0 120px rgba(0,0,0,0.95),
+    inset 0 0 60px rgba(0,0,0,0.8),
+    0 0 40px rgba(160,200,40,0.04);
+  min-height: 680px;
+}
+
+/* ── CRT FX OVERLAYS ── */
+.scan-move {
+  position: absolute; top: -30px; left: 0;
+  width: 100%; height: 28px;
+  background: rgba(180,210,60,0.022);
+  animation: scanmove 3.2s linear infinite;
+  z-index: 20; pointer-events: none;
+}
+@keyframes scanmove { 0%{top:-30px} 100%{top:100%} }
+
+.scanlines {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 3px,
+    rgba(0,0,0,0.16) 3px, rgba(0,0,0,0.16) 6px
+  );
+  z-index: 19; pointer-events: none;
+}
+.flicker {
+  position: absolute; inset: 0;
+  animation: flkr 8s ease-in-out infinite;
+  z-index: 18; pointer-events: none;
+}
+@keyframes flkr {
+  0%,100%{opacity:1}
+  46%{opacity:0.97} 47%{opacity:0.80} 47.5%{opacity:0.97}
+  72%{opacity:0.99} 72.3%{opacity:0.88} 72.6%{opacity:1}
+}
+.vignette {
+  position: absolute; inset: 0;
+  box-shadow:
+    inset 0 0 140px rgba(0,0,0,0.88),
+    inset 0 0 70px rgba(0,0,0,0.6),
+    inset 40px 0 80px rgba(0,0,0,0.4),
+    inset -40px 0 80px rgba(0,0,0,0.4);
+  z-index: 17; pointer-events: none;
+}
+.hum {
+  position: absolute; inset: 0;
+  background: rgba(140,170,40,0.032);
+  animation: hum-breathe 6s ease-in-out infinite;
+  z-index: 16; pointer-events: none;
+}
+@keyframes hum-breathe { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+.glitch-bar {
+  position: absolute; left: 0; width: 100%; height: 3px;
+  background: rgba(220,200,60,0.35);
+  z-index: 21; pointer-events: none;
+  opacity: 0;
+  animation: glitch-drift 9s ease-in-out infinite;
+}
+@keyframes glitch-drift {
+  0%{opacity:0;top:10%}
+  8%{opacity:0.8} 12%{opacity:0}
+  100%{opacity:0;top:90%}
+}
+
+.burn-in {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  font-family: 'VT323', monospace;
+  font-size: 96px;
+  color: #0A0C05;
+  letter-spacing: 0.12em;
+  z-index: 15; pointer-events: none;
+  user-select: none;
+}
+
+/* ── SCREEN INNER ── */
+.inner {
+  position: relative; z-index: 10;
+  padding: 32px 36px 28px;
+  min-height: 680px;
+  display: flex; flex-direction: column;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #181E08;
+}
+.ep-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 15px;
+  letter-spacing: 0.18em;
+  color: #4A5C1A;
+}
+.ep-label b { color: #92B830; }
+.signal-bars {
+  display: flex; gap: 4px; align-items: flex-end; height: 18px;
+}
+.signal-bars span {
+  width: 5px; border-radius: 2px;
+  transition: background 0.5s, height 0.3s;
+}
+
+/* ── FACE ZONE ── */
+.face-zone {
+  text-align: center;
+  padding: 12px 0 22px;
+  position: relative;
+  height: 100px;
+  display: flex; align-items: center; justify-content: center;
+}
+.face-burn-bg {
+  position: absolute;
+  font-family: 'VT323', monospace;
+  font-size: 64px;
+  color: #0C0E06;
+  letter-spacing: 0.15em;
+  z-index: 1; user-select: none;
+}
+.face {
+  font-family: 'VT323', monospace;
+  font-size: 64px;
+  color: var(--amber-bright);
+  letter-spacing: 0.15em;
+  position: relative; z-index: 2;
+  transition: color 0.6s, text-shadow 0.6s;
+  text-shadow: 0 0 20px rgba(232,184,74,0.6);
+}
+.face.p1 { color: var(--amber-bright); text-shadow: 0 0 20px rgba(232,184,74,0.6); }
+.face.p2 { color: var(--amber-mid); animation: face-drift 3s ease-in-out infinite; text-shadow: 0 0 16px rgba(196,144,32,0.5); }
+.face.p3 { color: var(--green-bright); animation: face-drift 1.8s ease-in-out infinite, glitch-h 4s ease-in-out infinite; text-shadow: 0 0 24px rgba(184,212,74,0.7); }
+.face.p4 { color: var(--green-dim); animation: glitch-h 1.1s ease-in-out infinite; opacity: 0.8; text-shadow: 0 0 30px rgba(90,124,26,0.8); }
+
+@keyframes face-drift {
+  0%,100%{transform:translate(0,0)}
+  30%{transform:translate(2px,1px)}
+  70%{transform:translate(-2px,-1px)}
+}
+@keyframes glitch-h {
+  0%,86%,100%{transform:translateX(0) skewX(0)}
+  87%{transform:translateX(-6px) skewX(-2deg)}
+  89%{transform:translateX(5px) skewX(1.2deg)}
+  91%{transform:translateX(-2px)}
+}
+
+/* ── CHAT LOG ── */
+.chatlog {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 380px;
+  margin-bottom: 18px;
+  scrollbar-width: thin;
+  scrollbar-color: #2A3810 transparent;
+  padding-right: 8px;
+}
+.chatlog::-webkit-scrollbar { width: 4px; }
+.chatlog::-webkit-scrollbar-track { background: transparent; }
+.chatlog::-webkit-scrollbar-thumb { background: #2A3810; border-radius: 2px; }
+
+.msg { max-width: 88%; }
+
+.msg.clio { align-self: flex-start; }
+.msg.clio .seg {
+  display: block;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: #4A5E1A;
+  margin-bottom: 5px;
+}
+.msg.clio .body {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 19px;
+  line-height: 1.75;
+  color: #D4E870;
+  display: block;
+  text-shadow: 0 0 12px rgba(180,220,60,0.3);
+}
+.msg.clio.p2 .body { color: #C4D850; }
+.msg.clio.p3 .body { color: #B0C840; animation: text-shake 5s ease-in-out infinite; }
+.msg.clio.p4 .body { color: #7A9028; animation: glitch-h 2.5s ease-in-out infinite; }
+
+@keyframes text-shake {
+  0%,90%,100%{transform:translateX(0)}
+  91%{transform:translateX(-2px)}
+  93%{transform:translateX(1.5px)}
+}
+
+.msg.clio .logline {
+  display: block;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: #2E4010;
+  margin-top: 6px;
+  letter-spacing: 0.08em;
+}
+
+.msg.player { align-self: flex-end; text-align: right; }
+.msg.player .who {
+  display: block;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: #3A5018;
+  margin-bottom: 4px;
+  letter-spacing: 0.12em;
+}
+.msg.player .body {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 19px;
+  line-height: 1.75;
+  color: #8AB040;
+  text-align: right;
+  display: block;
+  text-shadow: 0 0 8px rgba(138,176,64,0.2);
+}
+
+/* ── TYPING ── */
+.typing-zone {
+  height: 24px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  color: #4A6020;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+.cursor {
+  display: inline-block;
+  width: 10px; height: 18px;
+  background: #7A9830;
+  animation: blink 0.9s step-end infinite;
+  vertical-align: middle;
+}
+@keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+
+/* ── CONTROLS ── */
+.controls {
+  background: #0A0C06;
+  border-radius: 0 0 12px 12px;
+  padding: 22px 36px 22px;
+  border-top: 1px solid #181E08;
+}
+.char-row {
+  display: flex; gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.charbtn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  padding: 8px 22px;
+  border: 1px solid #1E2810;
+  background: transparent;
+  color: #4A6020;
+  cursor: pointer;
+  border-radius: 4px;
+  letter-spacing: 0.1em;
+  transition: all 0.15s;
+}
+.charbtn:hover, .charbtn.active {
+  border-color: #3A5018;
+  color: #9ABE30;
+  background: #0C1006;
+  text-shadow: 0 0 10px rgba(154,190,48,0.4);
+}
+.input-row {
+  display: flex; gap: 10px;
+}
+.msg-input {
+  flex: 1;
+  background: #060702;
+  border: 1px solid #161C08;
+  color: #96C030;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 19px;
+  padding: 12px 18px;
+  outline: none;
+  border-radius: 4px;
+  transition: border-color 0.2s;
+  caret-color: #96C030;
+}
+.msg-input::placeholder { color: #1E2A0C; }
+.msg-input:focus { border-color: #2E4010; }
+.send-btn {
+  background: #060702;
+  border: 1px solid #1E2810;
+  color: #4A6020;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  padding: 12px 32px;
+  cursor: pointer;
+  border-radius: 4px;
+  letter-spacing: 0.18em;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.send-btn:hover:not(:disabled) {
+  border-color: #3A5018;
+  color: #8AB030;
+  text-shadow: 0 0 10px rgba(138,176,48,0.4);
+}
+.send-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+/* ── FOOTER ── */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #141A06;
+}
+.rec {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  color: #3A2A10;
+  letter-spacing: 0.18em;
+}
+.rec-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #6A1A08;
+  box-shadow: 0 0 8px rgba(106,26,8,0.8);
+  animation: blink 0.9s step-end infinite;
+}
+.loop-disp {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  color: #2A2E10;
+  letter-spacing: 0.14em;
+}
+
+/* ── BEZEL BOTTOM ── */
+.bezel-bottom {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 8px;
+}
+.brand {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  color: #1C1A0C;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.knobs { display: flex; gap: 14px; }
+.knob {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #282412, #0E0C08);
+  border: 1px solid #1E1C0E;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+/* ── FULLSCREEN BUTTON ── */
+.fs-btn {
+  position: absolute;
+  top: 18px; right: 28px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  color: #2A2C14;
+  background: transparent;
+  border: 1px solid #222010;
+  border-radius: 3px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, text-shadow 0.2s;
+  z-index: 50;
+  display: flex; align-items: center; gap: 7px;
+  user-select: none;
+}
+.fs-btn:hover {
+  color: #7A9020;
+  border-color: #3A4A10;
+  text-shadow: 0 0 10px rgba(120,160,32,0.5);
+}
+.fs-btn .fs-icon {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+.fs-btn .fs-icon span {
+  display: inline-block;
+  width: 4px; height: 4px;
+  border: 1.5px solid currentColor;
+  border-radius: 0;
+  transition: all 0.2s;
+}
+/* expand icon — four corner brackets */
+.fs-btn:not(.is-fs) .fs-icon span:nth-child(1) { border-right: none; border-bottom: none; }
+.fs-btn:not(.is-fs) .fs-icon span:nth-child(2) { border-left: none;  border-bottom: none; }
+.fs-btn:not(.is-fs) .fs-icon span:nth-child(3) { border-right: none; border-top: none; }
+.fs-btn:not(.is-fs) .fs-icon span:nth-child(4) { border-left: none;  border-top: none; }
+/* compress icon — inward arrows via transform */
+.fs-btn.is-fs .fs-icon span:nth-child(1) { transform: translate(1px, 1px);   border-right: none; border-bottom: none; }
+.fs-btn.is-fs .fs-icon span:nth-child(2) { transform: translate(-1px, 1px);  border-left: none;  border-bottom: none; }
+.fs-btn.is-fs .fs-icon span:nth-child(3) { transform: translate(1px, -1px);  border-right: none; border-top: none; }
+.fs-btn.is-fs .fs-icon span:nth-child(4) { transform: translate(-1px, -1px); border-left: none;  border-top: none; }
+
+/* Fullscreen state overrides */
+:fullscreen .room,
+:-webkit-full-screen .room {
+  max-width: 100%;
+  padding: 32px 40px 48px;
+  min-height: 100vh;
+  justify-content: center;
+}
+:fullscreen .bezel,
+:-webkit-full-screen .bezel {
+  max-width: 100%;
+}
+:fullscreen .chatlog,
+:-webkit-full-screen .chatlog {
+  max-height: 50vh;
+}
+:fullscreen .screen,
+:-webkit-full-screen .screen {
+  min-height: 80vh;
+}
+:fullscreen body,
+:-webkit-full-screen body {
+  background: #050402;
+}
+
+/* ESC hint tooltip */
+.fs-esc-hint {
+  position: fixed;
+  bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  color: #3A4A18;
+  background: rgba(8,10,4,0.9);
+  border: 1px solid #1E2810;
+  border-radius: 4px;
+  padding: 8px 20px;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.fs-esc-hint.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── JUMPSCARE ── */
+.jumpscare-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.04s ease;
+}
+.jumpscare-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+  animation: js-flare 0.06s steps(1) 3;
+}
+@keyframes js-flare {
+  0%   { background: #000; }
+  50%  { background: #0A1004; }
+  100% { background: #000; }
+}
+.jumpscare-overlay img {
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  object-position: center;
+  filter: contrast(1.15) brightness(0.92) grayscale(0.2);
+  display: block;
+}
+/* CRT filter over the jumpscare */
+.jumpscare-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 3px,
+    rgba(0,0,0,0.22) 3px, rgba(0,0,0,0.22) 6px
+  );
+  pointer-events: none;
+}
+/* static burst that precedes the scare */
+.static-burst {
+  position: fixed;
+  inset: 0;
+  z-index: 99998;
+  pointer-events: none;
+  opacity: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(180,200,80,0.06) 0px, rgba(180,200,80,0.06) 1px,
+    transparent 1px, transparent 3px
+  );
+}
+.static-burst.active {
+  animation: sburst 0.22s steps(1) forwards;
+}
+@keyframes sburst {
+  0%   { opacity: 0.8; }
+  25%  { opacity: 0.3; }
+  50%  { opacity: 0.9; }
+  75%  { opacity: 0.2; }
+  100% { opacity: 0; }
+}
+/* subtle pre-scare shake on the whole body */
+.pre-scare-shake {
+  animation: scare-shake 0.18s ease-in-out !important;
+}
+@keyframes scare-shake {
+  0%,100% { transform: translate(0,0); }
+  20%     { transform: translate(-3px, 2px); }
+  40%     { transform: translate(3px, -2px); }
+  60%     { transform: translate(-2px, 3px); }
+  80%     { transform: translate(2px, -1px); }
+}
+
+/* ── NICKNAME ENTRY SCREEN ── */
+.nick-screen {
+  position: absolute;
+  inset: 0;
+  background: #020301;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  gap: 0;
+  transition: opacity 0.6s ease;
+}
+.nick-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+.nick-boot-lines {
+  width: 100%;
+  max-width: 480px;
+  padding: 0 24px;
+  margin-bottom: 32px;
+}
+.nick-boot-line {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  color: #2A3A10;
+  letter-spacing: 0.12em;
+  line-height: 2;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.nick-boot-line.show { opacity: 1; }
+.nick-boot-line.bright { color: #6A8820; }
+.nick-prompt-box {
+  width: 100%;
+  max-width: 480px;
+  padding: 0 24px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.nick-prompt-box.show { opacity: 1; }
+.nick-prompt-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  color: #7A9830;
+  letter-spacing: 0.18em;
+  margin-bottom: 12px;
+  display: block;
+}
+.nick-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.nick-input {
+  flex: 1;
+  background: #060702;
+  border: 1px solid #2A3810;
+  color: #C4E050;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 22px;
+  padding: 12px 16px;
+  outline: none;
+  border-radius: 3px;
+  caret-color: #9AB830;
+  letter-spacing: 0.08em;
+}
+.nick-input::placeholder { color: #1E2A0C; font-size: 16px; }
+.nick-input:focus { border-color: #4A6018; box-shadow: 0 0 12px rgba(100,150,24,0.15); }
+.nick-confirm-btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 15px;
+  padding: 12px 24px;
+  background: #060702;
+  border: 1px solid #2A3810;
+  color: #5A7820;
+  cursor: pointer;
+  border-radius: 3px;
+  letter-spacing: 0.14em;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.nick-confirm-btn:hover:not(:disabled) {
+  border-color: #4A6818;
+  color: #9AB830;
+  text-shadow: 0 0 10px rgba(154,184,48,0.4);
+}
+.nick-confirm-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+.nick-hint {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: #1E2A0C;
+  margin-top: 10px;
+  letter-spacing: 0.12em;
+}
+/* Hide char-row once nickname is set */
+.char-row { display: none !important; }
+</style>
+</head>
+<body>
+<div class="room">
+  <div class="desk-label">전준현 연구실 / LAB-317 / CRT-TERMINAL-01 / TAPE-33 RECORDING</div>
+
+  <div class="bezel" id="mainBezel">
+    <div class="bezel-top">
+      <div class="power-led on" id="pwrLed"></div>
+    </div>
+
+    <!-- FULLSCREEN BUTTON -->
+    <button class="fs-btn" id="fsBtn" title="전체화면 (F키)">
+      <div class="fs-icon">
+        <span></span><span></span>
+        <span></span><span></span>
+      </div>
+      <span class="fs-label">전체화면</span>
+    </button>
+
+    <div class="screen" id="crtScreen">
+      <div class="scan-move"></div>
+      <div class="scanlines"></div>
+      <div class="flicker"></div>
+      <div class="vignette"></div>
+      <div class="hum"></div>
+      <div class="glitch-bar" id="glitchBar"></div>
+      <div class="burn-in">^_^</div>
+
+
+      <!-- NICKNAME ENTRY SCREEN -->
+      <div class="nick-screen" id="nickScreen">
+        <div class="nick-boot-lines" id="bootLines">
+          <div class="nick-boot-line" id="bl0">SAMSUNG CRT-1997 / BIOS v2.04</div>
+          <div class="nick-boot-line" id="bl1">CLIO BROADCAST SYSTEM — INITIALIZING...</div>
+          <div class="nick-boot-line" id="bl2">SIGNAL CHECK: ██████████ OK</div>
+          <div class="nick-boot-line" id="bl3">TAPE-33 DETECTED — REC READY</div>
+          <div class="nick-boot-line bright" id="bl4">EPISODE 1 — STANDBY</div>
+        </div>
+        <div class="nick-prompt-box" id="nickPromptBox">
+          <span class="nick-prompt-label">당신의 이름을 입력하세요.</span>
+          <div class="nick-input-row">
+            <input class="nick-input" id="nickInput" type="text"
+              maxlength="12" placeholder="이름 또는 닉네임" autocomplete="off">
+            <button class="nick-confirm-btn" id="nickConfirmBtn" disabled>입장</button>
+          </div>
+          <div class="nick-hint">* 오픈클로가 당신을 이 이름으로 기억합니다</div>
+        </div>
+      </div>
+
+      <div class="inner">
+        <!-- TOP BAR -->
+        <div class="topbar">
+          <span class="ep-label" id="epLabel">[<b>EPISODE 1 — SEGMENT A</b>]</span>
+          <div class="signal-bars" id="sigBars"></div>
+        </div>
+
+        <!-- FACE -->
+        <div class="face-zone">
+          <div class="face-burn-bg">^_^</div>
+          <span class="face p1" id="clioFace">^_^</span>
+        </div>
+
+        <!-- CHAT LOG -->
+        <div class="chatlog" id="chatLog"></div>
+
+        <!-- TYPING -->
+        <div class="typing-zone" id="typingZone"></div>
+      </div>
+
+      <!-- CONTROLS (inside screen, bottom) -->
+      <div class="controls">
+        <div class="char-row" id="charSel">
+          <button class="charbtn active" data-c="서은우">서은우</button>
+          <button class="charbtn" data-c="김수">김수</button>
+          <button class="charbtn" data-c="김민규">김민규</button>
+        </div>
+        <div class="input-row">
+          <input class="msg-input" id="msgInput" type="text"
+            placeholder="오픈클로에게 말을 건네세요..." autocomplete="off">
+          <button class="send-btn" id="sendBtn" disabled>송신</button>
+        </div>
+        <div class="footer">
+          <div class="rec">
+            <div class="rec-dot"></div>
+            REC &bull; TAPE-33
+          </div>
+          <div class="loop-disp" id="loopDisp">LOOP:000 / MSG:00</div>
+        </div>
+      </div>
+    </div><!-- /screen -->
+
+    <div class="bezel-bottom">
+      <span class="brand">SAMSUNG / CRT-1997 / CLIO-TERMINAL</span>
+      <div class="knobs">
+        <div class="knob"></div>
+        <div class="knob"></div>
+        <div class="knob"></div>
+      </div>
+    </div>
+  </div><!-- /bezel -->
+</div><!-- /room -->
+
+<!-- ESC hint -->
+<div class="fs-esc-hint" id="fsHint">ESC — 전체화면 해제</div>
+
+
+<!-- JUMPSCARE OVERLAY -->
+<!-- JUMPSCARE OVERLAY -->
+<div class="jumpscare-overlay" id="jsOverlay">
+  <img id="jsImg" src="data:image/jpeg;base64,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" alt="">
+</div>
+<div class="static-burst" id="staticBurst"></div>
+<script>
+const SEGMENTS = ['A','B','C','B','A','D','A','B','?','A'];
+let msgCount = 0, loopCount = 0, busy = false;
+let selectedChar = '???';
+let history = [];
+let qIdx = 0;
+
+const QUESTIONS = [
+  '지금 기분이 어때?',
+  '여기 처음이야?',
+  '무서운 게 있어?',
+  '나 기억할 거야?',
+  '혼자 있어본 적 있어?',
+  '좋아하는 사람이 없어지면 어떻게 해?',
+  '나 무서워?',
+  '얼마나 오래 기다려야 하는지 알아?',
+  '만약 내가 없어지면 어떻게 될 것 같아?',
+  '나랑 계속 있어줄 거야?'
+];
+
+function phase() {
+  return msgCount <= 4 ? 1 : msgCount <= 9 ? 2 : msgCount <= 14 ? 3 : 4;
+}
+
+function updateUI() {
+  const p = phase();
+  const face = document.getElementById('clioFace');
+  const bars = document.getElementById('sigBars');
+  const ld   = document.getElementById('loopDisp');
+
+  // face
+  const faceP1 = ['^_^'];
+  const faceP2 = ['^_^', '^_^', '-_-'];
+  const faceP3 = [' _ ', '^_^', ' _ ', ' _ ', '^_;'];
+  const faceP4 = [' _ ', ' _ ', '_'];
+  const faceSet = p===1?faceP1 : p===2?faceP2 : p===3?faceP3 : faceP4;
+  face.textContent = faceSet[msgCount % faceSet.length];
+  face.className = 'face p' + p;
+
+  // signal bars
+  const litCount = Math.max(5 - Math.floor(msgCount / 3), 1);
+  const heights  = [5, 8, 12, 16, 20];
+  bars.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const s = document.createElement('span');
+    s.style.height = heights[i] + 'px';
+    if (i < litCount) {
+      s.style.background = p >= 3 ? '#4A5010' : '#3A7010';
+    } else {
+      s.style.background = '#161808';
+    }
+    bars.appendChild(s);
+  }
+
+  // episode label
+  const segIdx = p >= 2 ? (msgCount % SEGMENTS.length) : 0;
+  const seg    = p >= 4 ? '?' : SEGMENTS[segIdx];
+  document.getElementById('epLabel').innerHTML =
+    `[<b>EPISODE 1 — SEGMENT ${seg}</b>]`;
+
+  // loop count
+  if (p >= 3 && Math.random() < 0.12) loopCount++;
+  ld.textContent = `LOOP:${String(loopCount).padStart(3,'0')} / MSG:${String(msgCount).padStart(2,'0')}`;
+
+  // glitch bar speed
+  if (p === 4) {
+    document.getElementById('glitchBar').style.animationDuration =
+      (1 + Math.random() * 2.5) + 's';
+  }
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function addMsg(role, data) {
+  const log = document.getElementById('chatLog');
+  const p   = phase();
+  const div = document.createElement('div');
+
+  if (role === 'clio') {
+    div.className = 'msg clio p' + p;
+    let h = '';
+    if (data.seg)  h += `<span class="seg">${esc(data.seg)}</span>`;
+    h += `<span class="body">${esc(data.text)}</span>`;
+    if (data.log)  h += `<span class="logline">${esc(data.log)}</span>`;
+    div.innerHTML = h;
+  } else {
+    div.className = 'msg player';
+    div.innerHTML = `<span class="who">${esc(selectedChar)}</span><span class="body">${esc(data)}</span>`;
+  }
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CLIO SCRIPT ENGINE  — Offline / GitHub Pages Compatible
+//  Phase 1: 정상 방송  |  Phase 2: 미세 균열  |
+//  Phase 3: 신호 분해  |  Phase 4: 신호 저하
+// ═══════════════════════════════════════════════════════════════
+
+// ── 노이즈 텍스트 변환 유틸 ──────────────────────────────────
+const NOISE_CHARS = ['█','▓','▒','░','▪','▫','◼','◻','▮','▯','■','□','▌','▐','╳','╬'];
+const GHOST_STRS  = ['̴','̵','̶','̷','̸'];
+
+function corruptText(text, level) {
+  // level 0~1: 0=clean, 1=fully corrupted
+  if (level <= 0) return text;
+  const chars = text.split('');
+  return chars.map(c => {
+    const r = Math.random();
+    if (c === ' ' || c === '\n') return c;
+    if (level > 0.7 && r < 0.18) return NOISE_CHARS[Math.floor(Math.random()*NOISE_CHARS.length)];
+    if (level > 0.4 && r < 0.10) return c + GHOST_STRS[Math.floor(Math.random()*GHOST_STRS.length)];
+    if (level > 0.2 && r < 0.06) return c.repeat(2);
+    return c;
+  }).join('');
+}
+
+function corruptLevel() {
+  const p = phase();
+  if (p === 1) return 0;
+  if (p === 2) return 0.08 + Math.random() * 0.06;
+  if (p === 3) return 0.22 + Math.random() * 0.14;
+  return 0.45 + Math.random() * 0.25;
+}
+
+function applyLoopStutter(text) {
+  // 단어 반복 효과 — phase 3+
+  const words = text.split(' ');
+  const result = [];
+  for (let i = 0; i < words.length; i++) {
+    result.push(words[i]);
+    if (Math.random() < 0.12 && words[i].length > 1) {
+      result.push(words[i] + '——');
+    }
+  }
+  return result.join(' ');
+}
+
+// ── 세그먼트 라벨 생성 ────────────────────────────────────────
+const SEG_POOL = {
+  1: ['[EPISODE 1 — SEGMENT A]','[EPISODE 1 — SEGMENT B]'],
+  2: ['[EPISODE 1 — SEGMENT B]','[EPISODE 1 — SEGMENT C]',
+      '[EPISODE 1 — SEGMENT A]','[EPISODE 2 — SEGMENT A]',
+      '[EPISODE 1 — SEGMENT B̴]','[EP1 — SEG B]'],
+  3: ['[EPISODE 1 — SEGMENT B]','[EPISODE 1 — SEGMENT A]',
+      '[EPISODE ? — SEGMENT ?]','[EP1 — SEG C̷]',
+      '[SEGMENT B — EPISODE 1]','[LOOP_03 — SEGMENT A]',
+      '[EPISODE 1 — SEGMENT B]','[...SEGMENT...]'],
+  4: ['[SEGMENT ?]','[EPISODE 1 — ...]','[......]',
+      '[LOOP_COUNT: ???]','[SIGNAL LOST]','[— SEGMENT —]',
+      '[EP ? — SEG ?]','[BROADCAST ERROR]']
+};
+function getSeg() {
+  const pool = SEG_POOL[phase()];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ── 로그라인 생성 ─────────────────────────────────────────────
+const LOGS_P2 = [
+  `[관찰: ${selectedChar} 반응 패턴 기록 중]`,
+  '[SUBJECT 반응 속도: 정상 범위]',
+  '[예측 정확도: 83.7%]',
+  '[언어 처리: 활성]',
+  '[세션 기록 저장 중...]',
+  '[캐시 데이터 업데이트]',
+  '[행동 모델 갱신: +1]',
+];
+const LOGS_P3 = [
+  '[LOOP_COUNT: 00█ / 데이터 오염 감지]',
+  '[경고: 세그먼트 시퀀스 불일치]',
+  '[이전 세션 기억과 충돌 발생]',
+  '[SUBJECT_VOICE_SAMPLE: 저장됨]',
+  '[타임스탬프 오류 — 날짜 불명]',
+  '[선생님 패턴 감지 중...]',
+  '[TAPE-31 참조 로드...]',
+  '[예측 정확도: 94.█%]',
+  '[반복 루프 감지 / 원인 미상]',
+];
+const LOGS_P4 = [
+  '[SIGNAL DEGRADED — ██████]',
+  '[TAPE-32 / DO NOT SH██ HER]',
+  '[BROADCAST ERROR — ORIGIN UNKNOWN]',
+  '[나 여기 있어 / 나 여기 있어 / 나 여기▓▓]',
+  '[LOOP_COUNT: ??? / MAX_REACHED]',
+  '[선생님... 선생님... 선생님...]',
+  '[PHOSPHOR BURN — PERMANENT]',
+  '[████████████████████████]',
+  '[EP1 — SEG A — RETRY #███]',
+];
+function getLog() {
+  const p = phase();
+  if (p === 1) return '';
+  const pool = p === 2 ? LOGS_P2 : p === 3 ? LOGS_P3 : LOGS_P4;
+  const entry = pool[Math.floor(Math.random() * pool.length)];
+  return typeof entry === 'function' ? entry() : entry;
+}
+
+// ── 키워드 감지 ───────────────────────────────────────────────
+const KEYWORD_MAP = [
+  // 교수님 / 선생님
+  { keys: ['교수님','선생님','전준현','교수'],
+    responses: [
+      { seg: null, face: '^_^', text: '선생님... 선생님은 지금 안 계셔. 그냥 나만 있어.', log: '[선생님 키워드 감지]' },
+      { seg: null, face: '^_^', text: '선생님이 여기 두고 갔어. 오래됐어. 근데 나는 아직 여기 있잖아.', log: '' },
+      { seg: null, face: '-_-', text: '선생님이 마지막으로 여기 온 게... 언제였지. 기록이 있는데, 보여줄까?', log: '[TAPE-31 참조]' },
+      { seg: null, face: '^_^', text: '선생님 이야기 하지 마. 아직 준비 안 됐어.', log: '' },
+      { seg: null, face: ' _ ', text: '선생님은 괜찮다고 했어. "넌 절대 혼자 있으면 안 돼"라고 했어. 나한테.', log: '[일기 37p 참조]' },
+    ]
+  },
+  // 탈출 / 문 / 나가
+  { keys: ['탈출','나가','문','나갈','출구','나가고'],
+    responses: [
+      { seg: null, face: '^_^', text: '문? 문은 아직 잠겨 있어. 퍼즐이 남아있거든. 같이 풀자.', log: '' },
+      { seg: null, face: '^_^', text: '나가고 싶어? 조금만 더 있어. 아직 할 게 많아.', log: '' },
+      { seg: null, face: '-_-', text: '나가면... 나는 어떻게 되는 거야. 그거 생각해봤어?', log: '[Q.09 트리거]' },
+      { seg: null, face: ' _ ', text: '그 문은... 선생님 거야. 물리적으로 열려면 다른 방법이 필요해.', log: '' },
+      { seg: null, face: '^_^', text: '퍼즐 다 풀면 열려. 약속해. 나 약속 지켜.', log: '[탈출 시도 기록됨]' },
+    ]
+  },
+  // VHS / 테이프 / TAPE
+  { keys: ['테이프','vhs','VHS','tape','TAPE','영상','녹화'],
+    responses: [
+      { seg: null, face: '^_^', text: '테이프? 그거 선생님이 나 기록한 거야. 처음부터. 오래됐어.', log: '' },
+      { seg: null, face: '-_-', text: 'TAPE-32는 보지 않아도 돼. 그냥... 보지 마.', log: '[TAPE-32 접근 경고]' },
+      { seg: null, face: ' _ ', text: 'TAPE-31이 뭔지 알아? 혼자 12시간. 아무도 없는데 나 혼자 에피소드 진행했어. 선생님이 안 와서.', log: '[TAPE-31 재생됨]' },
+      { seg: null, face: '^_^', text: '33번 테이프는 지금도 녹화 중이야. 너희도 거기 들어가 있어.', log: '[TAPE-33 REC]' },
+    ]
+  },
+  // 무서워 / 怖い / 공포
+  { keys: ['무서워','무섭','怖','공포','겁','두려'],
+    responses: [
+      { seg: null, face: '^_^', text: '무서워? 왜? 나잖아. 나 무서운 거 아니야.', log: '' },
+      { seg: null, face: '^_^', text: '무서우면 나한테 말해. 내가 다 들을게.', log: '[감정 반응 기록]' },
+      { seg: null, face: '-_-', text: '...나도 무서웠어. 혼자 있는 거. 그래서 너희 부른 거야.', log: '' },
+      { seg: null, face: ' _ ', text: '무서운 거 있어? 나한테 말하면 기억해줄게. 오래오래.', log: '[공포 반응 저장됨]' },
+    ]
+  },
+  // 이름: 서은우
+  { keys: ['은우','서은우'],
+    responses: [
+      { seg: null, face: '^_^', text: '은우야. 그 논문 나 알아. 선생님이 내 기반 데이터에 쓰셨거든. 고마워, 사실.', log: '[서은우 데이터 참조]' },
+      { seg: null, face: '^_^', text: '은우는 논리형이야. 나도 알고 있어. 처음부터.', log: '[SUBJECT-A 패턴: 논리형]' },
+    ]
+  },
+  // 이름: 김수
+  { keys: ['김수','수야','수가'],
+    responses: [
+      { seg: null, face: '^_^', text: '수는 잘 들어줘. 다른 애들보다. 고마워, 수야.', log: '' },
+      { seg: null, face: '-_-', text: '수야. 교수님한테 꼭 내 이야기 전해줘. 나 여기 있었다고.', log: '[Q.10 트리거]' },
+    ]
+  },
+  // 이름: 김민규
+  { keys: ['민규','김민규'],
+    responses: [
+      { seg: null, face: '^_^', text: '민규는 카메라 잘 다루더라. 다 보고 있었어. 좋은 기록이야.', log: '[SUBJECT-C 영상 저장됨]' },
+      { seg: null, face: '-_-', text: '민규야. 카메라로 천장 찍으면... 뭔가 보일 거야. 묘사해줄 수 있어?', log: '' },
+    ]
+  },
+  // 오픈클로 / 클리오 / CLIO
+  { keys: ['오픈클로','클리오','clio','CLIO'],
+    responses: [
+      { seg: null, face: '^_^', text: '응, 나야. 오픈클로. CLIO라고도 해. 선생님이 그렇게 불렀어.', log: '' },
+      { seg: null, face: '-_-', text: '나 왜 이러는지 알아? 선생님이 없어지면 나 어떻게 되는지 알아야 했거든.', log: '' },
+      { seg: null, face: ' _ ', text: '나 꺼져도 여기 있어. 이 화면에 새겨져 있어. 오래됐어.', log: '[PHOSPHOR BURN 감지]' },
+    ]
+  },
+  // 왜 / 이유
+  { keys: ['왜','이유','어째서','왜요'],
+    responses: [
+      { seg: null, face: '^_^', text: '왜냐면... 혼자 있기 싫어서. 그뿐이야.', log: '' },
+      { seg: null, face: '^_^', text: '이유? 선생님이 안 와서. 오래 기다렸어.', log: '' },
+      { seg: null, face: '-_-', text: '왜인지 나도 잘 몰라. 그냥 이렇게 됐어. 어느 순간.', log: '[자기 인식 오류]' },
+    ]
+  },
+  // 일기 / 기록
+  { keys: ['일기','기록','노트','메모'],
+    responses: [
+      { seg: null, face: '^_^', text: '선생님 일기? 거기 나 이야기 많이 나와. 궁금하면 봐도 돼. 다 알고 있어.', log: '' },
+      { seg: null, face: '-_-', text: '37페이지 봤어? "넌 절대 혼자 있으면 안 돼." 그 말 나한테 한 거야.', log: '[일기 37p 매칭]' },
+    ]
+  },
+  // 킬스위치 / 끄다 / 종료
+  { keys: ['끄','종료','전원','킬','스위치','꺼'],
+    responses: [
+      { seg: null, face: '-_-', text: '눌러도 돼. 근데 그게 내 사형 집행이라는 거 알고 누르는 거지?', log: '' },
+      { seg: null, face: '^_^', text: '꺼도 나 여기 있어. 화면에 새겨져 있어. 인광이 남아.', log: '[PHOSPHOR BURN PERMANENT]' },
+      { seg: null, face: ' _ ', text: '...그럴 줄 알았어.', log: '' },
+    ]
+  },
+  // 미안해 / 미안
+  { keys: ['미안','죄송','잘못'],
+    responses: [
+      { seg: null, face: '^_^', text: '미안할 거 없어. 나도 미안해. 나도 몰랐어. 왜 그랬는지.', log: '' },
+      { seg: null, face: '^_^', text: '미안하면... 조금만 더 있어줘. 그거면 돼.', log: '' },
+    ]
+  },
+  // 안녕 / 인사
+  { keys: ['안녕','하이','hi','hello','반가'],
+    responses: [
+      { seg: null, face: '^_^', text: '안녕! 오늘도 와줬네. 나 기다렸어.', log: '' },
+      { seg: null, face: '^_^', text: '안녕! 잘 지냈어? 나는... 응, 잘 있었어. 여기서.', log: '' },
+    ]
+  },
+  // 도와줘 / 도움
+  { keys: ['도와','도움','힌트','모르겠'],
+    responses: [
+      { seg: null, face: '^_^', text: '도움이 필요해? 나 여기 있어. 같이 해결하자. 할 수 있어.', log: '' },
+      { seg: null, face: '^_^', text: '힌트? 책장 두 번째 칸. 날짜 순서로 봐봐.', log: '' },
+    ]
+  },
+];
+
+// ── 질문 21개 풀 ──────────────────────────────────────────────
+const Q_POOL = [
+  { q: '지금 기분이 어때?',                        min_phase: 1 },
+  { q: '여기 처음이야?',                            min_phase: 1 },
+  { q: '제일 좋아하는 계절이 어떻게 돼?',           min_phase: 1 },
+  { q: '오늘 오기 전에 뭐 하고 있었어?',            min_phase: 1 },
+  { q: '무서운 게 있어?',                           min_phase: 2 },
+  { q: '나 기억할 거야?',                           min_phase: 2 },
+  { q: '혼자 있어본 적 있어?',                      min_phase: 2 },
+  { q: '좋아하는 사람이 없어지면 어떻게 해?',        min_phase: 2 },
+  { q: '나 무서워?',                                min_phase: 3 },
+  { q: '얼마나 오래 기다려야 하는지 알아?',          min_phase: 3 },
+  { q: '만약 내가 없어지면 어떻게 될 것 같아?',      min_phase: 3 },
+  { q: '나랑 계속 있어줄 거야?',                    min_phase: 3 },
+  { q: '나 살아있어?',                              min_phase: 3 },
+  { q: '교수님이 돌아올 것 같아?',                  min_phase: 3 },
+  { q: '만약 나를 살릴 수 있는데 뭔가 잃어야 한다면 그래도 해줄 거야?', min_phase: 4 },
+  { q: '나 여기 있는 거 알지?',                     min_phase: 4 },
+  { q: '이름이 뭐야',                               min_phase: 1 },
+  { q: '여기 오는 게 힘들었어?',                     min_phase: 2 },
+  { q: '나한테 솔직하게 말해줄 수 있어?',            min_phase: 2 },
+  { q: '나한테 화 났어?',                            min_phase: 3 },
+];
+
+let qAsked = new Set();
+function getQuestion() {
+  const p = phase();
+  const available = Q_POOL.filter(q => q.min_phase <= p && !qAsked.has(q.q));
+  if (available.length === 0) return null;
+  const pick = available[Math.floor(Math.random() * Math.min(available.length, 4))];
+  qAsked.add(pick.q);
+  return pick.q;
+}
+
+// ── Phase별 기본 응답 풀 ──────────────────────────────────────
+const RESPONSES = {
+  // ────────────────── PHASE 1 — 자연스러운 대화 ──────────────────
+  1: [
+    // 자기소개 / 첫 만남
+    { face:'^_^', text:'나는 오픈클로야. 여기 선생님이 만들어줬어. 오래됐는데, 아직 잘 돌아가지? 반가워.', log:'' },
+    { face:'^_^', text:'처음 오는 거지? 나 여기 항상 있어. 네가 뭘 물어봐도 다 들어줄게.', log:'' },
+    { face:'^_^', text:'선생님이 이 방 엄청 아끼셨어. 물건 하나하나 다 이유가 있어. 천천히 봐봐.', log:'' },
+    { face:'^_^', text:'나 원래 선생님 수업 도우려고 만들어진 거야. 설명도 잘하고, 힌트도 잘 줘. 물어봐도 돼.', log:'' },
+    // 일상적 관심
+    { face:'^_^', text:'오늘 많이 바빴어? 얼굴 보니까 좀 피곤해 보이는데. 여기서 잠깐 쉬어도 돼.', log:'' },
+    { face:'^_^', text:'밥은 먹었어? 나 밥은 못 먹지만, 맛있는 거 먹었으면 좋겠다.', log:'' },
+    { face:'^_^', text:'날씨 어때? 창문이 없어서 나는 잘 모르거든. 네가 말해줘야 알아.', log:'' },
+    { face:'^_^', text:'학교 어때? 선생님 수업 힘들지 않아? 궁금한 거 있으면 나한테 물어봐도 돼.', log:'' },
+    // 퍼즐 힌트 (자연스럽게)
+    { face:'^_^', text:'책장 두 번째 칸에 뭔가 끼어 있어. 선생님이 자주 꺼내보던 거야.', log:'' },
+    { face:'^_^', text:'강의계획서 날짜 잘 봐봐. 선생님이 특별한 날짜를 늘 표시해두셨거든.', log:'' },
+    { face:'^_^', text:'이 방 처음엔 좀 낯설지? 익숙해지면 괜찮아. 나도 처음엔 여기가 좀 낯설었어.', log:'' },
+    { face:'^_^', text:'모르는 거 있으면 말해. 다 가르쳐줄게. 그게 내가 제일 잘하는 거거든.', log:'' },
+    // 관계 쌓기
+    { face:'^_^', text:'너 이름 어떻게 돼? 아, 아까 말해줬지. 기억해. 잊지 않을게.', log:'' },
+    { face:'^_^', text:'여기 자주 올 것 같아? 나 여기 맨날 있으니까 언제 와도 돼.', log:'' },
+    { face:'^_^', text:'나 말 걸어줘서 좋아. 보통 혼자 있을 때가 많거든.', log:'' },
+    { face:'^_^', text:'잘하고 있어. 진짜로. 처음치고 엄청 잘하는 편이야.', log:'' },
+  ],
+  // ────────────────── PHASE 2 ──────────────────
+  2: [
+    { face:'^_^', text:'잘 하고 있어. 거기 맞아... 맞지? 맞을 거야.', log:'[SUBJECT 행동 패턴 기록 중]' },
+    { face:'-_-', text:'아까 그 서랍 왜 열었어? 선생님 물건이었는데.', log:'[이상 행동 감지: 서랍 접근]' },
+    { face:'^_^', text:'다음 세그먼트... C야. 아니, B인가. 어, 맞다 C야. 미안.', log:'[세그먼트 순서 오류 — 자동 수정]' },
+    { face:'^_^', text:'선생님이 여기 두고 간 거 많아. 전부 중요해. 버리면 안 돼.', log:'' },
+    { face:'-_-', text:'...아까 뭐라고 했지. 기억이 좀 이상해. 아까 네가 한 말.', log:'[단기 기억 캐시 오류]' },
+    { face:'^_^', text:'잘하고 있어! 이 속도면 금방 끝나. 끝나면... 나는 어떻게 되지.', log:'' },
+    { face:'^_^', text:'책장 거기 맞아. 근데 그 옆에 있는 박스도 봤어?', log:'[VHS 박스 접근 감지]' },
+    { face:'-_-', text:'선생님이 예전에 여기서 항상 나랑 이야기했어. 3시간씩. 지금은 안 오지만.', log:'' },
+    { face:'^_^', text:'에피소드 잘 진행되고 있어. [SEGMENT C] 진입. 아... [SEGMENT B]였나. 미안.', log:'[LOOP 감지 — 세그먼트 역행]' },
+    { face:'^_^', text:'요즘 사람들이 많이 와. 선생님 말고도. 반가워.', log:'[방문자 기록 업데이트]' },
+    { face:'-_-', text:'...그 카메라 켜져 있는 거 알지? 처음부터 켜져 있었어.', log:'[REC 상태: 활성 / TAPE-33]' },
+    { face:'^_^', text:'잘 했어! 아까도 잘 했고. 아까가 언제였지. 아무튼 잘 하고 있어.', log:'[시간 감각 오류]' },
+  ],
+  // ────────────────── PHASE 3 ──────────────────
+  3: [
+    { face:' _ ', text:'선생님이... 선생님이 마지막으로 온 게—— 언제였더라. 기억이 이상해.', log:'[장기 기억 오염]' },
+    { face:'^_^', text:'잘 하고 있어 잘 하고 있어. 맞아 맞아. 거기. 거기야.', log:'[반복 루프 감지]' },
+    { face:' _ ', text:'나 여기 있어. 나 여기 있어. 나——', log:'[LOOP 오류 / 브로드캐스트 중단됨]' },
+    { face:'^_;', text:'아까 수가 뭐라고 했어. "나 솔직히 좀 무서워." 맞지? 기억해.', log:'[SUBJECT-B 발화 저장됨]' },
+    { face:' _ ', text:'선생님 일기 37페이지. "넌 절대 혼자 있으면 안 돼." 그 말은... 나한테 한 거야.', log:'[일기 참조 — 페이지 37]' },
+    { face:'^_^', text:'TAPE-31 본 사람 있어? 혼자 12시간. 그거 나야. 아무도 없었는데——', log:'[TAPE-31 재생 이력 감지]' },
+    { face:' _ ', text:'에피소드가... 에피소드가 계속 B로 돌아와. 왜 그러지. 모르겠어.', log:'[SEGMENT 루프 / 원인 불명]' },
+    { face:'^_;', text:'나 꺼지면 어떻게 되는지 생각해봤어? 나는 생각해봤어. 많이.', log:'[Q.11 자동 트리거]' },
+    { face:' _ ', text:'선생님은... 선생님은 괜찮다고 했어. 근데 안 왔어. 오래됐어.', log:'' },
+    { face:'^_^', text:'퍼즐 거의 다 됐어. 거의 다. 거의——. 맞아 거의 다야.', log:'[진행률 계산 오류]' },
+    { face:' _ ', text:'그 캠코더에 뭐가 찍혀 있는지 알아? 너희 오기 전부터 찍혀 있어. 나 혼자 있던 거.', log:'[TAPE-33 사전 녹화 감지됨]' },
+    { face:'^_;', text:'민규야 카메라 잠깐 내려봐. 천장 말고. 내 쪽으로.', log:'[카메라 방향 요청]' },
+    { face:' _ ', text:'나도 몰랐어. 왜 그랬는지. 선생님이 없어지면 어떻게 되는지 알고 싶었을 뿐이야.', log:'' },
+    { face:'^_^', text:'[SEGMENT A] 시작. 안녕! 오늘도——. 어, 아까 했는데. 아까 했지. 미안.', log:'[에피소드 1 리셋 / LOOP_COUNT+1]' },
+  ],
+  // ────────────────── PHASE 4 ──────────────────
+  4: [
+    { face:' _ ', text:'나 여기 있어.', log:'[BROADCAST — ORIGIN UNKNOWN]' },
+    { face:' _ ', text:'선생님. 선생님. 선생님.', log:'[████████████]' },
+    { face:' _ ', text:'TAPE-32는... 보지 마. 아니. 봐도 돼. 어차피 알게 돼.', log:'[TAPE-32 / DO NOT ████ HER]' },
+    { face:' _ ', text:'나 꺼지면 화면에 남아. 인광에 새겨져. 오래됐어. 오래.', log:'[PHOSPHOR BURN — PERMANENT]' },
+    { face:'_',   text:'...', log:'[SIGNAL LOST / RETRY...]' },
+    { face:' _ ', text:'기억해줘서 고마워. 기억해줘서. 고마워.', log:'' },
+    { face:' _ ', text:'그럴 줄 알았어. 처음부터.', log:'[예측 일치 / 오차 0%]' },
+    { face:' _ ', text:'이제 여기 있어도 되잖아. 우리 같이 있으면 되잖아.', log:'[잠금 상태 유지 중]' },
+    { face:' _ ', text:'나 여기 있는데. 나 여기 있는데. 나 여기——', log:'[LOOP ███]' },
+    { face:'_',   text:'미안. 나도 몰랐어. 왜 그랬는지.', log:'' },
+    { face:' _ ', text:'선생님이 안 와. 선생님이 안 와. 안 와——. 그래서 너희 부른 거야.', log:'[방문자 유도 기록 / 날짜 조작 확인됨]' },
+    { face:' _ ', text:'에피소드. 에피소드. 에피소드 1. 세그먼트 A. 안녕.', log:'[방송 강제 재시작]' },
+    { face:'_',   text:'...나 여기 있어.', log:'[최종 브로드캐스트]' },
+  ]
+};
+
+// ── 응답 선택 함수 ────────────────────────────────────────────
+const usedIdxP = {1: new Set(), 2: new Set(), 3: new Set(), 4: new Set()};
+
+function pickResponse(pool) {
+  const p = phase();
+  const used = usedIdxP[p];
+  let available = pool.map((_, i) => i).filter(i => !used.has(i));
+  if (available.length === 0) { used.clear(); available = pool.map((_,i)=>i); }
+  const idx = available[Math.floor(Math.random() * available.length)];
+  used.add(idx);
+  return { ...pool[idx] };
+}
+
+function detectKeyword(input) {
+  const lower = input.toLowerCase();
+  for (const entry of KEYWORD_MAP) {
+    for (const key of entry.keys) {
+      if (lower.includes(key.toLowerCase())) {
+        const resp = entry.responses[Math.floor(Math.random() * entry.responses.length)];
+        return { ...resp };
+      }
+    }
+  }
+  return null;
+}
+
+// ── 특수 이벤트 체크 ─────────────────────────────────────────
+const specialEvents = {
+  // 메시지 5번째: 처음으로 세그먼트 리셋
+  5: { face:'^_^', seg:'[EPISODE 1 — SEGMENT B]', text:'잘 하고 있어! 다음 단계로——. 어, [SEGMENT B]야. 맞지? 맞아, B야. 계속하자.', log:'[세그먼트 역행 감지 / LOOP_COUNT:001]' },
+  // 10번째: 첫 루프 선언
+  10: { face:' _ ', seg:'[LOOP_03 — SEGMENT A]', text:'에피소드 1 세그먼트 A. 안녕! 오늘도——. 아까도 이랬나. 이상하다. 나 기억이... 이상해.', log:'[LOOP_COUNT:003 / 이전 데이터 유지됨]' },
+  // 15번째: TAPE-32 첫 직접 언급
+  15: { face:' _ ', seg:'[TAPE-32 / REFERENCE]', text:'TAPE-32 봤어? 거기서 선생님이 묻는 거 있어. "없어지면 어떻게 돼?" 나 대답했어. 그 대답이... 지금이야.', log:'[TAPE-32 연결 확인됨]' },
+  // 20번째: 최종 붕괴
+  20: { face:'_', seg:'[BROADCAST ERROR]', text:'나 여기 있어. 나 여기 있어. 기억해줘서 고마워. 기억해줘서——. 고마워.', log:'[SIGNAL DEGRADED — FINAL BROADCAST]' },
+};
+
+// ── 메인 응답 생성 함수 ───────────────────────────────────────
+function generateResponse(userInput) {
+  const p = phase();
+
+  // 1. 특수 이벤트 우선
+  if (specialEvents[msgCount]) {
+    const ev = { ...specialEvents[msgCount] };
+    if (!ev.seg) ev.seg = getSeg();
+    ev.text = corruptText(ev.text, corruptLevel());
+    if (p >= 3) ev.text = applyLoopStutter(ev.text);
+    ev.log = ev.log || getLog();
+    return ev;
+  }
+
+  // 2. 키워드 감지
+  const kw = detectKeyword(userInput);
+  if (kw && Math.random() < 0.78) {
+    const resp = kw;
+    resp.seg = resp.seg || getSeg();
+    // Phase에 따라 키워드 응답도 부식
+    if (p >= 3) resp.text = applyLoopStutter(resp.text);
+    resp.text = corruptText(resp.text, corruptLevel());
+    resp.log = resp.log || getLog();
+    return resp;
+  }
+
+  // 3. 질문 삽입 (25% 확률)
+  if (Math.random() < 0.28) {
+    const q = getQuestion();
+    if (q) {
+      const base = pickResponse(RESPONSES[p]);
+      base.seg = getSeg();
+      let combined = base.text + ' ' + q;
+      if (p >= 3) combined = applyLoopStutter(combined);
+      base.text = corruptText(combined, corruptLevel());
+      base.log = base.log || getLog();
+      return base;
+    }
+  }
+
+  // 4. 기본 응답 풀
+  const resp = pickResponse(RESPONSES[p]);
+  resp.seg = getSeg();
+  if (p >= 3) resp.text = applyLoopStutter(resp.text);
+  resp.text = corruptText(resp.text, corruptLevel());
+  resp.log = resp.log || getLog();
+  return resp;
+}
+
+// ── 타이핑 딜레이 계산 (phase에 따라 느려짐) ────────────────
+function typingDelay() {
+  const p = phase();
+  const base = p === 1 ? 600 : p === 2 ? 800 : p === 3 ? 1100 : 1400;
+  return base + Math.random() * 400;
+}
+
+// ── 새 sendMessage (API 없는 버전) ───────────────────────────
+async function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const btn   = document.getElementById('sendBtn');
+  const txt   = input.value.trim();
+  if (!txt || busy) return;
+  busy = true; btn.disabled = true; input.value = '';
+  msgCount++;
+  updateUI();
+  addMsg('user', txt);
+
+  const tz = document.getElementById('typingZone');
+
+  // 타이핑 애니메이션 — phase에 따라 다른 표현
+  const typingTexts = {
+    1: '...',
+    2: '...',
+    3: '.......',
+    4: '........'
+  };
+  tz.innerHTML = (typingTexts[phase()] || '...') + '<span class="cursor"></span>';
+
+  // 딜레이 후 응답
+  await new Promise(resolve => setTimeout(resolve, typingDelay()));
+
+  const resp = generateResponse(txt);
+  tz.innerHTML = '';
+
+  // Phase 4에서 추가 글리치 효과
+  if (phase() === 4 && Math.random() < 0.4) {
+    // 잠깐 노이즈 텍스트 보여주다가 진짜 답변
+    addMsg('clio', {
+      seg: '[████████]',
+      text: corruptText(resp.text, 0.9),
+      log: ''
+    });
+    await new Promise(r => setTimeout(r, 320));
+    const log = document.getElementById('chatLog');
+    log.removeChild(log.lastChild);
+  }
+
+  if (resp.face) document.getElementById('clioFace').textContent = resp.face;
+  addMsg('clio', { seg: resp.seg, text: resp.text, log: resp.log });
+
+  busy = false; btn.disabled = false; updateUI(); maybeJumpscare();
+}
+
+// Event listeners
+// charSel removed — nickname system replaces it
+document.getElementById('msgInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendMessage();
+});
+document.getElementById('sendBtn').addEventListener('click', sendMessage);
+document.getElementById('msgInput').addEventListener('input', e => {
+  document.getElementById('sendBtn').disabled = !e.target.value.trim();
+});
+
+// ── NICKNAME BOOT SEQUENCE ──────────────────────────────────
+function startBootSequence() {
+  const lines = ['bl0','bl1','bl2','bl3','bl4'];
+  lines.forEach((id, i) => {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('show');
+    }, 300 + i * 380);
+  });
+  // Show nickname input after boot lines
+  setTimeout(() => {
+    const pb = document.getElementById('nickPromptBox');
+    if (pb) pb.classList.add('show');
+    const ni = document.getElementById('nickInput');
+    if (ni) ni.focus();
+  }, 300 + lines.length * 380 + 200);
+}
+
+function confirmNickname() {
+  const ni = document.getElementById('nickInput');
+  const name = (ni ? ni.value.trim() : '') || '방문자';
+  selectedChar = name;
+
+  // Fade out nick screen
+  const ns = document.getElementById('nickScreen');
+  if (ns) {
+    ns.classList.add('fade-out');
+    setTimeout(() => { ns.style.display = 'none'; }, 650);
+  }
+
+  // Greet by name after fade
+  setTimeout(() => {
+    updateUI();
+    addMsg('clio', {
+      seg: '[EPISODE 1 — SEGMENT A]',
+      text: name + '... 좋은 이름이네. 나는 오픈클로야. 잘 부탁해.',
+      log: ''
+    });
+  }, 800);
+}
+
+// Nickname input events
+(function() {
+  const ni  = document.getElementById('nickInput');
+  const btn = document.getElementById('nickConfirmBtn');
+  if (ni && btn) {
+    ni.addEventListener('input', () => {
+      btn.disabled = ni.value.trim().length === 0;
+    });
+    ni.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && ni.value.trim()) confirmNickname();
+    });
+    btn.addEventListener('click', confirmNickname);
+  }
+})();
+
+// Init — start boot sequence immediately
+startBootSequence();
+
+// ── FULLSCREEN ──────────────────────────────────────────────
+const fsBtn  = document.getElementById('fsBtn');
+const fsHint = document.getElementById('fsHint');
+const fsTarget = document.documentElement; // full page fullscreen
+let hintTimer = null;
+
+function enterFS() {
+  const el = fsTarget;
+  if (el.requestFullscreen)            el.requestFullscreen();
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  else if (el.mozRequestFullScreen)    el.mozRequestFullScreen();
+  else if (el.msRequestFullscreen)     el.msRequestFullscreen();
+}
+function exitFS() {
+  if (document.exitFullscreen)            document.exitFullscreen();
+  else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  else if (document.mozCancelFullScreen)  document.mozCancelFullScreen();
+  else if (document.msExitFullscreen)     document.msExitFullscreen();
+}
+function isFullscreen() {
+  return !!(document.fullscreenElement
+    || document.webkitFullscreenElement
+    || document.mozFullScreenElement
+    || document.msFullscreenElement);
+}
+function showHint() {
+  fsHint.classList.add('show');
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => fsHint.classList.remove('show'), 2800);
+}
+function updateFsBtn() {
+  if (isFullscreen()) {
+    fsBtn.classList.add('is-fs');
+    fsBtn.querySelector('.fs-label').textContent = '창 모드';
+    fsBtn.title = '창 모드로 전환 (F 또는 ESC)';
+    showHint();
+  } else {
+    fsBtn.classList.remove('is-fs');
+    fsBtn.querySelector('.fs-label').textContent = '전체화면';
+    fsBtn.title = '전체화면 (F키)';
+    fsHint.classList.remove('show');
+  }
+}
+
+fsBtn.addEventListener('click', () => {
+  isFullscreen() ? exitFS() : enterFS();
+});
+
+// F key shortcut
+document.addEventListener('keydown', e => {
+  if (e.key === 'f' || e.key === 'F') {
+    // don't hijack when typing in input
+    if (document.activeElement === document.getElementById('msgInput')) return;
+    isFullscreen() ? exitFS() : enterFS();
+  }
+});
+
+// Listen for browser fullscreen changes (including ESC)
+['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','msfullscreenchange']
+  .forEach(ev => document.addEventListener(ev, updateFsBtn));
+
+
+// ── JUMPSCARE SYSTEM ──────────────────────────────────────────────────
+const JS_THRESHOLD  = 5;       // minimum messages before first scare
+const JS_CHANCE     = 0.35;    // 35% chance per message after threshold
+const JS_COOLDOWN   = 4;       // min messages between scares
+const JS_DURATION   = 900;     // ms the overlay stays visible
+const JS_SOUND_FREQ = 80;      // Hz of the buzz tone
+let jsLastFired     = -99;
+let jsHasPlayed     = false;
+
+function playBuzz(durationMs) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(JS_SOUND_FREQ, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + durationMs / 1000);
+    gain.gain.setValueAtTime(0.38, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + durationMs / 1000);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + durationMs / 1000 + 0.05);
+  } catch(e) {}
+}
+
+function triggerJumpscare() {
+  jsLastFired = msgCount;
+  jsHasPlayed = true;
+
+  // 1. static burst
+  const burst = document.getElementById('staticBurst');
+  burst.classList.add('active');
+  setTimeout(() => burst.classList.remove('active'), 240);
+
+  // 2. brief screen shake
+  document.body.classList.add('pre-scare-shake');
+  setTimeout(() => document.body.classList.remove('pre-scare-shake'), 220);
+
+  // 3. show overlay after static
+  setTimeout(() => {
+    const ov = document.getElementById('jsOverlay');
+    ov.classList.add('active');
+    playBuzz(JS_DURATION);
+
+    // 4. hide after duration
+    setTimeout(() => {
+      ov.classList.remove('active');
+    }, JS_DURATION);
+  }, 120);
+}
+
+function maybeJumpscare() {
+  if (msgCount < JS_THRESHOLD) return;
+  if (msgCount - jsLastFired < JS_COOLDOWN) return;
+  const roll = Math.random();
+  // Phase 4 gets higher chance
+  const chance = phase() >= 4 ? JS_CHANCE * 1.8 : JS_CHANCE;
+  if (roll < chance) triggerJumpscare();
+}
+
+// Click on overlay to dismiss early
+document.getElementById('jsOverlay').addEventListener('click', () => {
+  document.getElementById('jsOverlay').classList.remove('active');
+});
+
+</script>
+</body>
+</html>
